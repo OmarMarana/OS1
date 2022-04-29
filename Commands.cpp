@@ -54,7 +54,7 @@ void setTimer(){
         int diff=calDiffTime(*it);
         min_time=min(it->duration-diff,min_time);
     }
-    int time_alarm=max(1,min_time);
+    int time_alarm=max(1,min_time);     // whats this? maybe bcuz alarm takes unsigned int?
     alarm(time_alarm);
 }
 /////////////////////////////////////////////////////////////
@@ -123,7 +123,7 @@ char** getArgs(const char* cmd_line,int* num){
 }
 
 //to free args arrays
-void cleanUpArray(char** array,int length){
+void cleanUpArray(char** array,int length){ //why use free and delete?
     for(int i=0;i<length;i++){
         free(array[i]);
         array[i]=NULL;
@@ -312,7 +312,7 @@ PipeCommand::PipeCommand(const char *cmd_line):Command(cmd_line){
             is_command1=false;
             command1[i]='\0';
             is_command2=true;
-            sign = (char*)malloc(2);
+            sign = (char*)malloc(2);    // mem leak?
             strcpy(sign,"|");
             if (cmd_line[i + 1] == '&') {
                 sign = (char*)malloc(3);
@@ -324,7 +324,7 @@ PipeCommand::PipeCommand(const char *cmd_line):Command(cmd_line){
     command2[j]='\0';
     isBackground=_isBackgroundComamnd(cmd_line);
     //if & exist we have to remove from command 2
-    if(isBackground){
+    if(isBackground){       //why dont we remove the & from cmd1 too?
         _removeBackgroundSign(command2);
     }
     leftCommand=SmallShell::getInstance().CreateCommand(command1);
@@ -339,11 +339,11 @@ void PipeCommand::execute() {
     if (pid12 == 0) { //son
         setpgrp();
         int fd[2];
-        int standard_out0 = dup(0);
+        int standard_out0 = dup(0); // stdin is a better name
         int standard_out1 = dup(1);
         int standard_err = dup(2);
         pipe(fd);
-        pid_t pid1 = fork();
+        pid_t pid1 = fork();  // why didnt use setpgrp(); here? maybe so that killpg() kills all three processes when killing pipeCmd
         if (pid1 == 0) { // son of son
             if (strcmp(sign , "|")==0) { //sign=="|"
                 dup2(fd[1], 1);
@@ -351,7 +351,7 @@ void PipeCommand::execute() {
                 close(fd[1]);
                 //command1
                 leftCommand->execute();
-                dup2(standard_out1, 1);
+                dup2(standard_out1, 1);     // why change the stdout of cmd1 back to its father's stdout?
                 close(standard_out1);
             } else {//sign=="|&
                 dup2(fd[1], 2);
@@ -380,7 +380,7 @@ void PipeCommand::execute() {
                 close(fd[1]);
                 //command2
                 rightCommand->execute();
-                dup2(standard_out0, 0);
+                dup2(standard_out0, 0); // why return the stdin of son back to that of the father?
                 close(standard_out0);
             } else {//sign== "|&"
                 dup2(fd[0], 0);
@@ -417,7 +417,7 @@ void PipeCommand::execute() {
         perror("smash error: fork failed");
         return;
     } else {    //parent
-        this->pid = pid12;//????
+        this->pid = pid12;//????  appointing the pid of father (smash) to the pipeCmd??? why? - answer: it's actually the pid of the child that smash forks
         if (!isBackground) {
             SmallShell::getInstance().currFgCommand = this;
             if(waitpid(pid12, nullptr, WUNTRACED)==-1){
@@ -735,7 +735,7 @@ void KillCommand::execute() {
         return;
     }
     int x=CharToInt(firstNum);
-    if(myList->externalCommand.isPipe){
+    if(myList->externalCommand.isPipe){    // whats the diff between killpg and kill? and whats the connection with pipe?
         if(killpg(myList->externalCommand.pid,x)==-1){
             perror("smash error: killpg failed");
             return;
@@ -759,7 +759,7 @@ ForegroundCommand::ForegroundCommand(const char *cmd_line, JobsList *jobs) :Buil
 }
 
 void ForegroundCommand::execute() {
-    if(!this->isPartOfPipe) {
+    if(!this->isPartOfPipe) {         // whats up with this? seen it more than once
         jobs->removeFinishedJobs();
     }
     //you can minimize the number of lines ******
@@ -830,7 +830,7 @@ void BackgroundCommand::execute(){
         cerr<<"smash error: bg: invalid arguments"<<endl;//cout
         return;
     }
-    if(!this->isPartOfPipe) {
+    if(!this->isPartOfPipe) { // whats this?
         jobs->removeFinishedJobs();
     }
 
@@ -883,6 +883,7 @@ void BackgroundCommand::execute(){
                 return;
             }
         }
+
         pid_t pidJ=job->externalCommand.pid;
         cout<<job->externalCommand.commandLine  <<" : "<< pidJ <<endl;
         job->isStopped= false;
@@ -934,7 +935,7 @@ RedirectionCommand::RedirectionCommand(const char *cmd_line):Command(cmd_line) {
     this->fileName=(char*)malloc(strlen(filename_line));
     this->fileName=strcpy(this->fileName,file_args[0]);
     seperated_command=SmallShell::getInstance().CreateCommand(just_command_line); // not this line you have to change
-    this->seperated_command->isBackground=isBackground;
+    this->seperated_command->isBackground=isBackground;      // shouldn't we ignore & like they said?
     cleanUpArray(file_args,numOfArg);
     // do not forget to check & sign
 }
@@ -1242,7 +1243,7 @@ ChpromptCommand::ChpromptCommand(const char* cmd_line):Command(cmd_line){
 void ChpromptCommand::execute() {
     if(promptName) {
         free(SmallShell::getInstance().promptName);
-        SmallShell::getInstance().promptName=(char*)malloc(strlen(promptName)+1);
+        SmallShell::getInstance().promptName=(char*)malloc(strlen(promptName)+1);       //SmallShell::getInstance().promptName isnt this just lvalue? does it actually change the member?
         strcpy(SmallShell::getInstance().promptName,this->promptName);
     }
 }
@@ -1319,7 +1320,7 @@ TimeOutCommand::TimeOutCommand(const char *cmd_line) :Command(cmd_line){
     //make the new command without timeout+number
     char* new_command=(char*)malloc(strlen(cmd_line)+1);
     int i=0;
-    for(; !((*(cmd_line + i)) >= '0' && (*(cmd_line + i)) <= '9' && (*(cmd_line + i + 1)) == ' ') ; i++){
+    for(; !((*(cmd_line + i)) >= '0' && (*(cmd_line + i)) <= '9' && (*(cmd_line + i + 1)) == ' ') ; i++){  // why ! in " !((*(cmd_line + i))"?
     }
     strcpy(new_command,cmd_line+i+2);
     newCommand=SmallShell::getInstance().CreateCommand(new_command);
@@ -1350,7 +1351,7 @@ void TimeOutCommand::execute() {
         strcpy(ch,"-");//added
         TimeOutEntry tEntry(-1,duration, t_now, ch);
         SmallShell::getInstance().timeoutList.push_front(tEntry);
-        setTimer();
+        setTimer(); // I think we shouldn't do this since it sends a signal to smash itself in the case of bulit in cmds
         this->newCommand->execute();
         free(ch);//added
         return;

@@ -239,7 +239,7 @@ class ChpromptCommand: public Command{
 public:
     char* promptName;
     ChpromptCommand(const char* cmd_line);
-    void execute();
+    void execute();    // why not override?
 };
 
 class lsCommand: public BuiltInCommand{
@@ -287,7 +287,7 @@ public:
     list<TimeOutEntry> timeoutList;
     int nextIndex; //delete ??
     Command* currFgCommand; //update it ?? baraah
-    char* plastPwd;
+    char* plastPwd
     pid_t smashPid;
     char* promptName;
     // TODO: History

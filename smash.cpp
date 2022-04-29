@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 
     //TODO: setup sig alarm handler
     struct sigaction sigaction1;
-    sigaction1.sa_flags = SA_RESTART;
+    sigaction1.sa_flags = SA_RESTART; // SA_RESTART bcuz if a process is waiting and gets a signal the wait() will fail unless the flag is set
     sigaction1.sa_handler = alarmHandler;
     if (sigaction(SIGALRM, &sigaction1, NULL) == -1) {
         perror("smash error: failed to set alarm handler");
