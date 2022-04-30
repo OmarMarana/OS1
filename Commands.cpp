@@ -1257,7 +1257,7 @@ TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line)
             args[2][path_len] = ' ';
             _removeBackgroundSign(args[2]);
         }
-        this->N = CharToInt(args[1]);
+        this->N = CharToInt(args[1]+1);
         filename = std::string(args[2]);
     }
 
