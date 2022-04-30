@@ -1236,21 +1236,28 @@ TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line)
         return;
     }
 
+
     // remove & from filename
     if(length == 2)
     {
         // N should be 10 by default
-        int path_len = strlen(args[1]);
-        args[1][path_len] = ' ';
-        _removeBackgroundSign(args[1]);
+        if(_isBackgroundComamnd(cmd_line))
+        {
+            int path_len = strlen(args[1]);
+            args[1][path_len] = ' ';
+            _removeBackgroundSign(args[1]);
+        }
         filename = std::string(args[1]);
     }
     else
     {
+        if(_isBackgroundComamnd(cmd_line))
+        {
+            int path_len = strlen(args[2]);
+            args[2][path_len] = ' ';
+            _removeBackgroundSign(args[2]);
+        }
         this->N = CharToInt(args[1]);
-        int path_len = strlen(args[2]);
-        args[2][path_len] = ' ';
-        _removeBackgroundSign(args[2]);
         filename = std::string(args[2]);
     }
 
