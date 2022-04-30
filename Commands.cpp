@@ -1240,12 +1240,16 @@ TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line)
     if(length == 2)
     {
         // N should be 10 by default
+        int path_len = strlen(args[1]);
+        args[1][path_len] = ' ';
         _removeBackgroundSign(args[1]);
         filename = std::string(args[1]);
     }
     else
     {
         this->N = CharToInt(args[1]);
+        int path_len = strlen(args[2]);
+        args[2][path_len] = ' ';
         _removeBackgroundSign(args[2]);
         filename = std::string(args[2]);
     }
@@ -1265,20 +1269,28 @@ void TailCommand::execute()
             // Store the lines in reverse order.
             lines_in_reverse.insert(lines_in_reverse.begin(), line);
         }
+
+        //put the last N in a vec
         int i = 0;
-//        int lines_num = 1;
-//        int res;
-//        res = open("C:\\Users\\omarm\\Desktop\\test\\myout.txt", O_CREAT | O_WRONLY | O_TRUNC, 0666);
-//        dup2(res,1);
-        for(const auto& value: lines_in_reverse) {
+        std::vector<std::string> lines_to_print;
+        for(const auto& value: lines_in_reverse)
+        {
+            if(i == this->N)
+            {
+                break;
+            }
+            lines_to_print.insert(lines_to_print.begin(), value);
+            i++;
+        }
+
+
+        for(const auto& value: lines_to_print) {
             if(i == this->N)
             {
                 break;
             }
             std::string str = value + "\n";
             write(1,str.c_str() , str.length());
-//            std::cout << value << "\n";
-
             i++;
         }
     }
