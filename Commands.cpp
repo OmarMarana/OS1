@@ -1217,6 +1217,81 @@ void QuitCommand::execute() {
     exit(0);
 }
 
+TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line), N(N)
+{
+    ///////////////////////////////
+    //check the isPartOfPipe condition
+    ///////////////////////////////
+
+
+    if(length !=2 && length != 3 )
+    {
+        cerr<<"smash error: tail: invalid arguments"<<endl;//cout
+        return;
+    }
+
+    if(length == 3 && (args[1][0] != '-' ||args[1][1] == '\0'  ||!ValidNumber(args[1][1]))
+    {
+        cerr<<"smash error: tail: invalid arguments"<<endl;//cout
+        return;
+    }
+
+    // remove & from filename
+    if(length == 2)
+    {
+        // N should be 10 by default
+        _removeBackgroundSign(args[1]);
+        filename = std::string(args[1]);
+    }
+    else
+    {
+        this.N = CharToInt(args[1][1]);
+        _removeBackgroundSign(args[2]);
+        filename = std::string(args[2]);
+    }
+
+}
+
+void TailCommand::execute()
+{
+    std::ifstream in(filename);
+
+    if (in.is_open())
+    {
+        std::vector<std::string> lines_in_reverse;
+        std::string line;
+        while (std::getline(in, line))
+        {
+            // Store the lines in reverse order.
+            lines_in_reverse.insert(lines_in_reverse.begin(), line);
+        }
+        int i = 0;
+//        int lines_num = 1;
+//        int res;
+//        res = open("C:\\Users\\omarm\\Desktop\\test\\myout.txt", O_CREAT | O_WRONLY | O_TRUNC, 0666);
+//        dup2(res,1);
+        for(const auto& value: lines_in_reverse) {
+            if(i == this->N)
+            {
+                break;
+            }
+            std::string str = value + "\n";
+            write(1,str.c_str() , str.length());
+//            std::cout << value << "\n";
+
+            i++;
+        }
+    }
+    else
+    {
+        perror("smash error: open failed");
+        return;
+    }
+    return 0;
+
+
+}
+
 ChpromptCommand::ChpromptCommand(const char* cmd_line):Command(cmd_line){
 
     if(length==1){
@@ -1479,6 +1554,12 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
         cleanUpArray(lineArgs,numOfArg);
         return new BackgroundCommand(cmd_line, &jobs);
     }
+    //tail
+    if (strcmp(lineArgs[0],"tail\0") == 0) {
+        cleanUpArray(lineArgs,numOfArg);
+        return new TailCommand(cmd_line);
+    }
+
 
     if (strcmp(lineArgs[0],"head\0") == 0) {
         cleanUpArray(lineArgs,numOfArg);
