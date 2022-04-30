@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <iomanip>
 #include "Commands.h"
+#include <utime.h>
 
 #include <dirent.h>
 #include <bits/stdc++.h>
@@ -1239,23 +1240,26 @@ void QuitCommand::execute() {
 static struct tm calcTm(std::string& str)
 {
     int arr[6];
-    int stride = 2;
-    int idx =0;
-    for(int i = 0 ; i < 15; i+=3,idx++)
-    {
-        auto sub = str.substr(i,stride);
-        arr[idx] = stoi(sub);
+
+    std::string delimiter = ":";
+    size_t pos = 0;
+    std::string token;
+    int idx = 0;
+    while ((pos = str.find(delimiter)) != std::string::npos) {
+        token = str.substr(0, pos);
+        arr[idx] = stoi(token);
+        str.erase(0, pos + delimiter.length());
+        idx++;
     }
-    auto sub = str.substr(15, std::string::npos);
-    arr[5] =  stoi(sub);
+    arr[5] = stoi(str);
 
     struct tm my_tm;
     my_tm.tm_sec = arr[0];
     my_tm.tm_min = arr[1];
     my_tm.tm_hour = arr[2];
     my_tm.tm_mday = arr[3];
-    my_tm.tm_mon = arr[4];
-    my_tm.tm_year = arr[5];
+    my_tm.tm_mon = arr[4]-1;
+    my_tm.tm_year = arr[5] -1900;
 
     return my_tm;
 
