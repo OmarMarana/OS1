@@ -1236,6 +1236,91 @@ void QuitCommand::execute() {
     exit(0);
 }
 
+static struct tm calcTm(std::string& str)
+{
+    int arr[6];
+    int stride = 2;
+    int idx =0;
+    for(int i = 0 ; i < 15; i+=3,idx++)
+    {
+        auto sub = str.substr(i,stride);
+        arr[idx] = stoi(sub);
+    }
+    auto sub = str.substr(15, std::string::npos);
+    arr[5] =  stoi(sub);
+
+    struct tm my_tm;
+    my_tm.tm_sec = arr[0];
+    my_tm.tm_min = arr[1];
+    my_tm.tm_hour = arr[2];
+    my_tm.tm_mday = arr[3];
+    my_tm.tm_mon = arr[4];
+    my_tm.tm_year = arr[5];
+
+    return my_tm;
+
+}
+
+TouchCommand::TouchCommand(const char* cmd_line) : BuiltInCommand(cmd_line)
+{
+    ///////////////////////////////
+    //check the isPartOfPipe condition
+    ///////////////////////////////
+
+
+    bool removed_bg_sign = false;
+//    bool valid_format = true;
+    if(strcmp(args[length-1], "&") == 0)
+    {
+        free(args[length-1]);
+        args[length-1] = nullptr;
+        length--;
+        removed_bg_sign = true;
+    }
+
+    if(length != 3)
+    {
+        return;
+    }
+
+    if(_isBackgroundComamnd(cmd_line) && removed_bg_sign == false)
+    {
+        int timestamp_len = strlen(args[2]);
+        args[2][timestamp_len-1] = '\0';
+    }
+    this->filename = std::string(args[1]);
+
+    std::string timestamp(args[2]);
+    this->tm = calcTm(timestamp);
+
+}
+
+void TouchCommand::execute()
+{
+    ///////////////////////////////
+    //check the isPartOfPipe condition
+    ///////////////////////////////
+
+    if(length != 3)
+    {
+        cerr<<"smash error: touch: invalid arguments"<<endl;
+        return;
+    }
+
+    time_t time1 = mktime(&(this->tm));
+    struct utimbuf utimbuf1;
+    utimbuf1.actime = time1;
+    utimbuf1.modtime = time1;
+    int res = utime(filename.c_str(),&utimbuf1);
+    if(res == -1)
+    {
+        perror("smash error: utime failed");
+    }
+
+}
+
+
+
 //TODO: check if its okay to implement without read and open
 TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line), N(N)
 {
@@ -1257,7 +1342,7 @@ TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line)
 
     if(length !=2 && length != 3 )
     {
-//        cerr<<"smash error: tail: invalid arguments"<<endl;//cout
+//        cerr<<"smash error: tail: invalid arguments"<<endl;
 //        valid_format = true;
         return;
     }
@@ -1635,6 +1720,11 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
         return new TailCommand(cmd_line);
     }
 
+    //touch
+    if (strcmp(lineArgs[0],"touch\0") == 0) {
+        cleanUpArray(lineArgs,numOfArg);
+        return new TouchCommand(cmd_line);
+    }
 
     if (strcmp(lineArgs[0],"head\0") == 0) {
         cleanUpArray(lineArgs,numOfArg);

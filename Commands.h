@@ -4,6 +4,7 @@
 #include <vector>
 #include <list>
 #include <cstring>
+#include <time.h>
 //#include <string.h>
 
 using namespace std;
@@ -96,7 +97,14 @@ public:
 };
 
 
-
+class TouchCommand : public BuiltInCommand {
+public:
+    struct tm tm;
+    std::string filename;
+    TouchCommand(const char* cmd_line);
+    virtual ~TouchCommand() {}
+    void execute() override;
+};
 
 class TailCommand : public BuiltInCommand {
 public:
