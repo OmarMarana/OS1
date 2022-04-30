@@ -1245,7 +1245,7 @@ TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line)
     }
     else
     {
-        this.N = CharToInt(args[1][1]);
+        this->N = CharToInt(args[1]);
         _removeBackgroundSign(args[2]);
         filename = std::string(args[2]);
     }
