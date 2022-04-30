@@ -1290,7 +1290,7 @@ void TailCommand::execute()
             i++;
         }
 
-
+        i =0;
         for(const auto& value: lines_to_print) {
             if(i == this->N)
             {
