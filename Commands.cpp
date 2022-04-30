@@ -1230,7 +1230,7 @@ TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line)
         return;
     }
 
-    if(length == 3 && (args[1][0] != '-' ||args[1][1] == '\0'  ||!ValidNumber(args[1][1]))
+    if(length == 3 && (args[1][0] != '-' ||args[1][1] == '\0'  ||!ValidNumber(args[1]+1))
     {
         cerr<<"smash error: tail: invalid arguments"<<endl;//cout
         return;
@@ -1287,7 +1287,7 @@ void TailCommand::execute()
         perror("smash error: open failed");
         return;
     }
-    return 0;
+
 
 
 }

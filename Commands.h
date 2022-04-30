@@ -297,7 +297,7 @@ public:
     list<TimeOutEntry> timeoutList;
     int nextIndex; //delete ??
     Command* currFgCommand; //update it ?? baraah
-    char* plastPwd
+    char* plastPwd;
     pid_t smashPid;
     char* promptName;
     // TODO: History
