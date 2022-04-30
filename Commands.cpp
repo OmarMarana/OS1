@@ -16,6 +16,7 @@
 
 using namespace std;
 const std::string WHITESPACE = " \n\r\t\f\v";
+const std::string WHITESPACE2 = " \n\r\t\f\v\0";
 
 #if 0
 #define FUNC_ENTRY()  \
@@ -111,6 +112,24 @@ void _removeBackgroundSign(char* cmd_line) {
     cmd_line[idx] = ' ';
     // truncate the command line string up to the last non-space character
     cmd_line[str.find_last_not_of(WHITESPACE, idx) + 1] = 0;
+}
+
+void _removeBackgroundSign2(char* cmd_line) {
+    const string str(cmd_line);
+    // find last character other than spaces
+    unsigned int idx = str.find_last_not_of(WHITESPACE2);
+    // if all characters are spaces then return
+    if (idx == string::npos) {
+        return;
+    }
+    // if the command line does not end with & then return
+    if (cmd_line[idx] != '&') {
+        return;
+    }
+    // replace the & (background sign) with space and then remove all tailing spaces.
+    cmd_line[idx] = ' ';
+    // truncate the command line string up to the last non-space character
+    cmd_line[str.find_last_not_of(WHITESPACE2, idx) + 1] = 0;
 }
 
 char** getArgs(const char* cmd_line,int* num){
@@ -1217,6 +1236,7 @@ void QuitCommand::execute() {
     exit(0);
 }
 
+//TODO: check if its okay to implement without read and open
 TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line), N(N)
 {
     ///////////////////////////////
@@ -1224,15 +1244,28 @@ TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line)
     ///////////////////////////////
 
 
+    bool removed_bg_sign = false;
+//    bool valid_format = true;
+    if(strcmp(args[length-1], "&") == 0)
+    {
+        free(args[length-1]);
+        args[length-1] = nullptr;
+        length--;
+        removed_bg_sign = true;
+    }
+
+
     if(length !=2 && length != 3 )
     {
-        cerr<<"smash error: tail: invalid arguments"<<endl;//cout
+//        cerr<<"smash error: tail: invalid arguments"<<endl;//cout
+//        valid_format = true;
         return;
     }
 
     if(length == 3 && (args[1][0] != '-' ||args[1][1] == '\0'  ||!ValidNumber(args[1]+1)))
     {
-        cerr<<"smash error: tail: invalid arguments"<<endl;//cout
+//        cerr<<"smash error: tail: invalid arguments"<<endl;//cout
+//        valid_format = true;
         return;
     }
 
@@ -1241,30 +1274,48 @@ TailCommand::TailCommand(const char *cmd_line, int N) : BuiltInCommand(cmd_line)
     if(length == 2)
     {
         // N should be 10 by default
-        if(_isBackgroundComamnd(cmd_line))
+        if(_isBackgroundComamnd(cmd_line) && removed_bg_sign == false)
         {
             int path_len = strlen(args[1]);
-            args[1][path_len] = ' ';
-            _removeBackgroundSign(args[1]);
+            args[1][path_len-1] = '\0';
+//            _removeBackgroundSign(args[1]);
         }
         filename = std::string(args[1]);
     }
     else
     {
-        if(_isBackgroundComamnd(cmd_line))
+        if(_isBackgroundComamnd(cmd_line) && removed_bg_sign == false)
         {
             int path_len = strlen(args[2]);
-            args[2][path_len] = ' ';
-            _removeBackgroundSign(args[2]);
+            args[2][path_len-1] = '\0';
+//            _removeBackgroundSign(args[2]);
         }
         this->N = CharToInt(args[1]+1);
         filename = std::string(args[2]);
     }
 
+
 }
 
 void TailCommand::execute()
 {
+    ///////////////////////////////
+    //check the isPartOfPipe condition
+    ///////////////////////////////
+    if(length !=2 && length != 3 )
+    {
+        cerr<<"smash error: tail: invalid arguments"<<endl;//cout
+//        valid_format = true;
+        return;
+    }
+
+    if(length == 3 && (args[1][0] != '-' ||args[1][1] == '\0'  ||!ValidNumber(args[1]+1)))
+    {
+        cerr<<"smash error: tail: invalid arguments"<<endl;//cout
+//        valid_format = true;
+        return;
+    }
+
     std::ifstream in(filename);
 
     if (in.is_open())
@@ -1297,8 +1348,13 @@ void TailCommand::execute()
                 break;
             }
             std::string str = value + "\n";
-            write(1,str.c_str() , str.length());
+            int res = write(1,str.c_str() , str.length());
+            if(res == -1)
+            {
+                perror("smash error: write failed");
+            }
             i++;
+            //what if write didnt write all the data that I wanted to write? same with read
         }
     }
     else
