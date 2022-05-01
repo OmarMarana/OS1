@@ -1405,52 +1405,64 @@ void TailCommand::execute()
         return;
     }
 
-    std::ifstream in(filename);
-
-    if (in.is_open())
-    {
-        std::vector<std::string> lines_in_reverse;
-        std::string line;
-        while (std::getline(in, line))
-        {
-            // Store the lines in reverse order.
-            lines_in_reverse.insert(lines_in_reverse.begin(), line);
-        }
-
-        //put the last N in a vec
-        int i = 0;
-        std::vector<std::string> lines_to_print;
-        for(const auto& value: lines_in_reverse)
-        {
-            if(i == this->N)
-            {
-                break;
-            }
-            lines_to_print.insert(lines_to_print.begin(), value);
-            i++;
-        }
-
-        i =0;
-        for(const auto& value: lines_to_print) {
-            if(i == this->N)
-            {
-                break;
-            }
-            std::string str = value + "\n";
-            int res = write(1,str.c_str() , str.length());
-            if(res == -1)
-            {
-                perror("smash error: write failed");
-            }
-            i++;
-            //what if write didnt write all the data that I wanted to write? same with read
-        }
-    }
-    else
+    int read_fd = open(filename.c_str(), O_RDONLY);
+    if(read_fd==-1)
     {
         perror("smash error: open failed");
         return;
     }
+
+    std::string cur_line;
+    char *buf = (char*)malloc(sizeof (*buf));
+    std::vector<std::string> lines;
+
+    bool wrote = false;
+    for(int rd_res =read(read_fd,buf,1); rd_res != 0; rd_res =read(read_fd,buf,1))
+    {
+        if(rd_res == -1)
+        {
+            perror("smash error: read failed");
+            return;
+        }
+
+        wrote = false;
+        cur_line += std::string(buf).substr(0,1);
+        if( *buf== '\n' )
+        {
+            lines.push_back(cur_line);
+            cur_line = "";
+            wrote = true;
+        }
+    }
+
+    if( wrote == false)
+    {
+        lines.push_back(cur_line );
+    }
+
+    std::vector<std::string> N_last_lines;
+    int i = 1;
+
+    std::vector<std::string>::reverse_iterator it = lines.rbegin();
+    while (it != lines.rend())
+    {
+        if(i > this->N)
+        {
+            break;
+        }
+        N_last_lines.insert(N_last_lines.begin(),*it);
+        it++;
+        i++;
+    }
+    for(const auto& value: N_last_lines)
+    {
+        if(write(1,value.c_str(),value.size())==-1)
+        {
+            perror("smash error: write failed");
+            return;
+        }
+    }
+
 
 
 
