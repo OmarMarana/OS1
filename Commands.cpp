@@ -310,6 +310,15 @@ void ExternalCommand::execute() { // check ??
 
 //TODO: PipeCommand Class
 PipeCommand::PipeCommand(const char *cmd_line):Command(cmd_line){
+
+    std::string cmd_str(cmd_line);
+    size_t idx = cmd_str.find_last_of("&");
+    if(idx != string::npos)
+    {
+        cmd_str.erase(idx,1);
+    }
+    cmd_line = cmd_str.c_str();
+
     isPipe=true;
     int lastId;
     SmallShell::getInstance().jobs.removeFinishedJobs();
@@ -343,7 +352,7 @@ PipeCommand::PipeCommand(const char *cmd_line):Command(cmd_line){
     }
     command2[j]='\0';
     isBackground=_isBackgroundComamnd(cmd_line);
-    //if & exist we have to remove from command 2
+//    if & exist we have to remove from command 2
     if(isBackground){       //why dont we remove the & from cmd1 too?
         _removeBackgroundSign(command2);
     }
@@ -1742,10 +1751,10 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
         return new TouchCommand(cmd_line);
     }
 
-    if (strcmp(lineArgs[0],"head\0") == 0) {
-        cleanUpArray(lineArgs,numOfArg);
-        return new HeadCommand(cmd_line);
-    }
+//    if (strcmp(lineArgs[0],"head\0") == 0) {
+//        cleanUpArray(lineArgs,numOfArg);
+//        return new HeadCommand(cmd_line);
+//    }
     /*9*/
     if (strcmp(lineArgs[0],"quit\0") == 0) {
         cleanUpArray(lineArgs,numOfArg);
