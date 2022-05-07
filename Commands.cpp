@@ -755,6 +755,11 @@ void KillCommand::execute() {
         return;
     }
     int x=CharToInt(firstNum);
+    if (!(1<=x && x<=31)){
+        cerr<<"smash error: kill: invalid arguments"<< endl;//cout
+        return;
+    }
+
     if(myList->externalCommand.isPipe){    // whats the diff between killpg and kill? and whats the connection with pipe?
         if(killpg(myList->externalCommand.pid,x)==-1){
             perror("smash error: killpg failed");
@@ -976,9 +981,11 @@ void RedirectionCommand::execute() {
     close(1);
     int res;
     if (strcmp(sign,">")==0) {//sign == ">"
-        res = open(fileName, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+//        res = open(fileName, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+        res = open(fileName, O_CREAT | O_WRONLY | O_TRUNC, S_IWUSR | S_IRUSR | S_IXGRP  | S_IRGRP  | S_IXOTH  | S_IROTH );
     } else {
-        res = open(fileName, O_CREAT | O_WRONLY | O_APPEND, 0666);
+//        res = open(fileName, O_CREAT | O_WRONLY | O_APPEND, 0666);
+        res = open(fileName, O_CREAT | O_WRONLY | O_APPEND, S_IWUSR | S_IRUSR | S_IXGRP  | S_IRGRP  | S_IXOTH  | S_IROTH );
     }
     if (res == -1) {
         perror("smash error: open failed");
